@@ -1,11 +1,14 @@
 ###################################################################################################
 # DAQ POLLING SCRIPT FOR ADVANTECH MIC1816
 # 
-# This script uses the proprietary Advantech Python libraries
-#
-#
-#
+# This script uses the proprietary Advantech Python libraries that are installed in the MIC1816
+# and included here as a modified script imported as ait
 # 
+# Not much development here as the DAQ's sampling rate is too low for CRDS, but this template
+# allows for the use of the Advantech's DAQ to get Buffered Analog Inputs with a trigger signal
+# as a delayed stop (i.e. it samples a buffer for a certain amount of points after the trigger and
+# stops)
+# Modified by Mixtli Campos on 30/03/2023
 
 import sys
 sys.path.append('.')
@@ -16,7 +19,6 @@ from AI_PollingOneBufferedAI_TDtp import AI_PollingOneBufferedAI_TDtp_dev as ait
 from Automation.BDaq import *
 from Automation.BDaq.WaveformAiCtrl import WaveformAiCtrl
 from Automation.BDaq.BDaqApi import AdxEnumToString, BioFailed
-
 
 # Configure the following parameters before running the demo
 deviceDescription = "MIC-1816,BID#15"
@@ -46,95 +48,6 @@ trigger1Level = 2.0
 # set which trigger be used for this demo, trigger0(0) or trigger1(1)
 triggerUsed = 0
 
-def AdvPollingOneBufferedAI_TDtp():
-    ret = ErrorCode.Success
-
-    # Step 1: Create a 'WaveformAiCtrl' for buffered AI function
-    # Select a device by device number pr device description and specify the access mode.
-    # In this example we use ModeWrite mode so that we can use fully control the device,
-    # including configuring, sampling, etc
-    wfAiCtrl = WaveformAiCtrl(deviceDescription)
-    for _ in range(1):
-        wfAiCtrl.loadProfile = profilePath   # Loads a profile to initialize the device
-
-        # Step 2: Set necessary parameters
-        # get the Conversion instance and set the start channel and scan channel number
-        wfAiCtrl.conversion.channelStart = startChannel
-        wfAiCtrl.conversion.channelCount = channelCount
-
-        # Set record count and section length
-        # This sectionCount is nonzero value, which means 'One Buffered' Mode
-        wfAiCtrl.record.sectionCount = sectionCount
-        wfAiCtrl.record.sectionLength = sectionLength
-
-        # Step 3: Trigger parameters setting
-        trgCount = wfAiCtrl.features.triggerCount
-        # for trigger0
-        if triggerUsed == 0:
-            if trgCount:
-                #################################################################
-                # The different kinds of devices have different trigger source. The details see manual.
-                # In this example, we use the DemoDevice and set 'AI channel 0' as the default trigger source
-                wfAiCtrl.trigger[0].source = wfAiCtrl.features.getTriggerSources(0)[1] # To DemoDevice, the 1 means 'AI channel 0'
-
-                wfAiCtrl.trigger[0].action = triggerAction
-                wfAiCtrl.trigger[0].delayCount = triggerDelayCount
-                wfAiCtrl.trigger[0].edge = triggerEdge
-                wfAiCtrl.trigger[0].level = triggerLevel
-            else:
-                print("The device can not supported trigger function!")
-                break!u!7
-        elif triggerUsed == 1:
-            if trgCount > 1:
-                wfAiCtrl.trigger[1].source = wfAiCtrl.features.getTriggerSources(1)[1]
-
-                wfAiCtrl.trigger[1].action = trigger1Action
-                wfAiCtrl.trigger[1].delayCount = trigger1DelayCount
-                wfAiCtrl.trigger[1].edge = trigger1Edge
-                wfAiCtrl.trigger[1].level = trigger1Level
-            else:
-                print("the trigger1 can not supported by the device!")
-                break
-
-        # Step 4: The operation has been started
-        #print("Polling finite acquisition is in progress!")
-        ret = wfAiCtrl.prepare()
-        if BioFailed(ret):
-            break
-
-        ret = wfAiCtrl.start()
-        if BioFailed(ret):
-            break
-
-        # Step 5: GetDate with Polling Style
-        result = wfAiCtrl.getDataF64(USER_BUFFER_SIZE, -1)  # The timeout value is -1, meaning infinite waiting
-        ret, returnedCount, data, = result[0], result[1], result[2]
-        if BioFailed(ret):
-            break
-
-        #if ret == ErrorCode.Success or ret == ErrorCode.WarningFuncStopped:
-            #print("The first sample each channel are:")
-            #for i in range(channelCount):
-                #print("channel %d: %s" % (i + startChannel, data[i]))
-
-        delayCount = wfAiCtrl.trigger[triggerUsed].delayCount
-        triggerPointIndex = returnedCount // channelCount - delayCount
-        #print("trigger point each channel: %d" % triggerPointIndex)
-        #print("Acquisition has completed!")
-        #plt.plot(data[500:700])
-        #plt.show()
-        # Step 6: stop the operation if it is running
-        ret = wfAiCtrl.stop()
-
-    # Step 7: close device, release any allocated resource before quit
-    wfAiCtrl.dispose()
-
-    # If something wrong in this execution, print the error code on screen for tracking
-    if BioFailed(ret):
-        enumStr = AdxEnumToString("ErrorCode", ret.value, 256)
-        print("Some error occurred. And the last error code is %#x. [%s]" % (ret.value, enumStr))
-    return data
-
 #####
 fig = plt.figure()
 ax1 = fig.add_subplot(111)
@@ -144,7 +57,7 @@ ys = [0]*x_len
 line, = ax1.plot(xs,ys,'-k')
 
 def animate(i):
-    scan = AdvPollingOneBufferedAI_TDtp()
+    scan = ait.AdvPollingOneBufferedAI_TDtp()
     dataset = scan[500:600]
     ax1.set_ylim([min(dataset)-.05,max(dataset)+.05])
     line.set_ydata(dataset)
@@ -156,5 +69,3 @@ plt.show()
 
 #####
 
-#if __name__ == '__main__':
-#    AdvPollingOneBufferedAI_TDtp()
