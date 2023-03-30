@@ -11,12 +11,20 @@
 # mcampos@ucc.ie                                                                        #
 #########################################################################################
 
+# Python packages
+import os
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import datetime as dt
 import numpy as np
 from time import sleep
+
+# Local
+import configurations as conf
+import AndorFunctions as andor
+sys.path.append('..')
+import py.CESfunctions_dev as cf
 
 # The pyAndorSDK2 is a proprietary package from the ANDOR SDK
 from pyAndorSDK2 import atmcd
@@ -25,21 +33,20 @@ from pyAndorSDK2 import atmcd_errors as errors
 
 #########################################################################################
 #####                       PARAMETER CONFIGURATION                                 #####
-# These parameters can be changed manually for now, later I will make a
-# configuration file (maybe)
+# These parameters can be changed manually or with a configuration file
 
-temp = -10                                          # Camera temperature
-exptime = 0.1                                       # Exposure time in seconds
-shots = 5                                           # Number of acquisitions
-acqMode = codes.Acquisition_Mode.SINGLE_SCAN        
+temp = conf.temp                                    # Camera temperature
+exptime = conf.exptime                              # Exposure time in seconds
+#shots = 5                                           # Number of acquisitions (deprecated)
+acqMode = conf.acqMode        
                                                     # Acquisition mode
                                                     # e.g. SINGLE_SCAN, ACCUMULATE
                                                     # check codes for more
-accum_number = 3                                    # Number of accumulations (if needed)
-accum_cycle = exptime + .5                          # Exp + Delay = Cycle time
+accum_number = conf.accums                          # Number of accumulations (if needed)
+accum_cycle = exptime + conf.delay                  # Exp + Delay = Cycle time
                                                     # (only for internal trigger)
-readMode = codes.Read_Mode.FULL_VERTICAL_BINNING    # Read mode
-trigMode = codes.Trigger_Mode.INTERNAL              # Trigger Mode
+readMode = conf.readMode                            # Read mode
+trigMode = conf.trigMode                            # Trigger Mode
 
 #########################################################################################
 
@@ -64,75 +71,15 @@ if errors.Error_Codes.DRV_SUCCESS != ret:
 #print("Function GetCameraSerialNumber returned {} Serial No: {}".format(
 #        ret, iSerialNumber))
 
-# Configure the acquisition
-ret = sdk.SetTemperature(temp)
-print("Function SetTemperature returned {} Set Temperature: {}".format(ret, temp))
+# Configure the acquisition, lines outsourced to the AndorFunctions.py
+try:
+    andor.prepare_temperature(sdk,temp)
+except:
+    sys.exit()
 
-ret = sdk.CoolerON()
-print("Function CoolerON returned {}".format(ret))
+xpixels = andor.prepare_camera(sdk,acqMode,readMode,trigmode,
+        accum_number,accum_cycle,exptime)
 
-#### BEGIN Temperature stabilization
-print('Waiting for temperature to stabilize:')
-s = True
-p = 1
-while s:
-    sleep(15)
-    (ret, temperature) = sdk.GetTemperature()
-    print("...Current temperature is {}C".format(temperature))
-    if ret == errors.Error_Codes.DRV_TEMP_STABILIZED:
-        print('...Temperature stabilized')
-        s = False
-    if p > 20:
-        print('...Instrument did not stabilize')
-        if (temperature <= (temp+5)) and (temperature >= (temp-5)):
-            print("......Temperature ({}C) is close to set temp, will continue".format(
-                temperature))
-            s = False
-        else:
-            print("......Temperature ({}C) is outside Set Temp +-5C, will exit".format(
-                temperature))
-            print("......Will run CoolerOFF for a bit for safety")
-            ret = sdk.CoolerOFF()
-            print("......Function CoolerOFF returned {}".format(ret))
-            sleep(120)
-            ret = sdk.ShutDown()
-            print("......Function ShutDown returned {}".format(ret))
-            sys.exit()
-    p += 1
-#### END Temperature stabilization
-
-ret = sdk.SetAcquisitionMode(acqMode)
-print("Function SetAcquisitionMode returned {}".format(ret))
-
-#### BEGIN Set Number and Cycles for ACCUMULATION MODE
-if acqMode == codes.Acquisition_Mode.ACCUMULATE:
-    ret = sdk.SetNumberAccumulations(accum_number)
-    print("Function SetNumberAccumulations returned {}".format(ret))
-    
-    ret = sdk.SetAccumulationCycleTime(accum_cycle)
-    print("Function SetAccumulationCycleTime returned {}".format(ret))
-#### END Set Number and Cycles for ACCUMULATION MODE
-
-ret = sdk.SetReadMode(readMode)
-print("Function SetReadMode returned {}".format(ret))
-
-ret = sdk.SetTriggerMode(trigMode)
-print("Function SetTriggerMode returned {}".format(ret))
-
-(ret, xpixels, ypixels) = sdk.GetDetector()
-print("Function GetDetector returned {} xpixels = {} ypixels = {}".format(
-    ret, xpixels, ypixels))
-
-ret = sdk.SetExposureTime(exptime)
-print("Function SetExposureTime returned {} time = {}s".format(ret,exptime))
-
-(ret, fminExposure, fAccumulate, fKinetic) = sdk.GetAcquisitionTimings()
-print("Function GetAcquisitionTimings returned",
-      "{} exposure = {} accumulate = {} kinetic = {}".format(ret, fminExposure, 
-                                                             fAccumulate, fKinetic))
-
-ret = sdk.PrepareAcquisition()
-print("Function PrepareAcquisition returned {}".format(ret))
 
 #########################################################################################
 
