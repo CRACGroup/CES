@@ -222,13 +222,13 @@ def animate(i):
     # Levenberg - Marquardt
     #res_lsq = least_squares(fun,x0, method = 'lm',
     #                       ftol=1e-12,xtol=1e-12,gtol=1e-12,
-    #                       args=(tdivs[551:-1],offset_values[551:]))
+    #                       args=(tdivs[start_fit:-1],offset_values[start_fit:]))
 
     # TRF
     #res_lsq = least_squares(fun,x0,
     #                      ftol=1e-12,xtol=1e-12,gtol=1e-12,
     #                      loss = 'cauchy', f_scale=0.1,
-    #                      args=(tdivs[551:-1],offset_values[551:]))
+    #                      args=(tdivs[start_fit:-1],offset_values[start_fit:]))
     
     #xs = res_lsq.x
     #### END OF LEAST SQUARES

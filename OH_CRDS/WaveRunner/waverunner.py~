@@ -34,7 +34,7 @@ plot_limit_lower = -1
 res_plot_limit=.25
 len_offset = 300
 start_fit = 600
-end_fit = 2500
+end_fit = 2250
 sweeps = 30
 runtime = 1.1 * (sweeps/10)
 
