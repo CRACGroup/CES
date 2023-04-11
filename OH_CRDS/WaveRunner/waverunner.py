@@ -1,6 +1,8 @@
 #########################################################################################
 # This program uses pyvisa to interface with a LeCroy Waverunner and with the SCANMATE 
 # dye laser to grab an average of n sweeps and change wavelength.
+# Fits Ring-Downs and shows fit and residuals
+# Saves data to a text file
 #
 # Written by: Mixtli Campos on 21/03/2023
 #
@@ -18,23 +20,32 @@ import matplotlib.animation as animation
 
 ########################## PARAMETERS ###################################################
 
+# Instument parameters
 size = 4                        # the size of the HEX chunks to process the waveform
                                 # depends on the precision, 2 for BYTE, 4 for WORD
+                                # check COMM_FORMAT command for LeCroy instruments
 
 scanmatevi = 'ASRL1::INSTR'     # pyvisa name for INSTR at serial COM1 
 lecroyvi = 'GPIB5::1::INSTR'    # pyvisa name for INSTR at GPIB channel 1
-                                # you can check them by the list.resources() method below
+                                # you can check them by the list.resources() method
+                                # check pyvisa DOCS for further info
 
 cycles = 10000                  # number of meas cycles before switching wavelength
 wavemeas = 307.921              # wavelength for tau_sample
 waveblank = 308                 # wavelength for tau_0
 
-plot_limit_upper = .5            # y axis will go from value_lower to value_upper
+# Plot parameters
+plot_limit_upper = .5           
 plot_limit_lower = -1
 res_plot_limit=.25
-len_offset = 300
+
+# Fitting parameters
+len_offset = 300                # Length of baseline offset for logarithm fitting
 start_fit = 600
-end_fit = 2250
+end_fit = 5000
+x0 = np.array([0,2,-50000])     # x0 for least_squares()
+
+# Cycle parameters
 sweeps = 30
 runtime = 1.1 * (sweeps/10)
 
@@ -108,6 +119,9 @@ def waitReady(visa,sleept,timeout=5,verbose=0):
     Polls INR register to check if the bits adding to 257 (end of Trace A collection)
     it ends when the bit is polled or after a timeout. The time and number of calls is
     shown
+    --- NOTE 11.04.2023 ---
+    If the triggering is not 'just right', the status bit change WON'T be detected
+    This function has been deprecated because of this reason. -Mixtli
     '''
     d=0
     c=0
@@ -132,8 +146,17 @@ def waitReady(visa,sleept,timeout=5,verbose=0):
     t2 = dt.datetime.now()
     print((t2-t1).total_seconds())
 
-def fun(x,y,t):
-    return x[0] + x[1] * np.exp(x[2]*t) - y
+def gendata(t,a,b,c):
+    '''
+    Generates the exponential fit
+    '''
+    return a+b*np.exp(t*c)
+
+def funct(x,t,y):
+    '''
+    Function to fit with optimize.least_squares
+    '''
+    return x[0] + x[1]*np.exp(x[2]*t)-y
 
 ############################ END OF FUNCTIONS ###########################################
 
@@ -182,19 +205,20 @@ ax2.grid()
 scanmate.write('X=%.3f' %waveblank)
 isblank = True
 
+# Initializes lists
 taus = []
 tstamp = []
 waveform = np.arange(counts-1)
-
 
 ## Resets the trace, waits for ready
 ta = dt.datetime.now()
 lecroy.write('TA:FRST')
 tb = dt.datetime.now()
 sleep(runtime - (tb-ta).total_seconds())
-#waitReady(lecroy,0.01,timeout=3,verbose=0)
+#waitReady(lecroy,0.01,timeout=3,verbose=0) ### Deprecated, problems with WaitReady()
 
-## Main loop, stores to M1, resets trace, queries data, gets values, waits for ready
+## Main loop, stores to M1, resets trace, queries data, gets values, 
+## fits paraments, gets residuals, waits for ready
 ## sends wavelength change to scanmate after n cycles
 ## is presented as a function for the animation class
 
@@ -210,37 +234,43 @@ def animate(i):
     print((t2-t1).total_seconds())
     values = getChunks(data[-1],size,vertgain,vertoff)
     line.set_ydata(values[:-1])
-     
-    coef = np.polyfit(tdivs[:len_offset+1],values[:len_offset+1],1)
-    poly1d_fn = np.poly1d(coef)
-    offset_values = values[:-1]-poly1d_fn(tdivs[:-1])
-    #print(coef) 
-    waveform = values[:-1]
+    waveform = np.array(values[:-1])
+    
+    # Prepare data for fitting
+    ts=tdivs[start_fit:end_fit]
+    ys=waveform[start_fit:end_fit]
+    
     #### LEAST SQUARES
-    #x0 = [0,offset_values[start_fit],-5]
-    #print(x0) 
+    
     # Levenberg - Marquardt
-    #res_lsq = least_squares(fun,x0, method = 'lm',
-    #                       ftol=1e-12,xtol=1e-12,gtol=1e-12,
-    #                       args=(tdivs[start_fit:-1],offset_values[start_fit:]))
+    #res_lsq = least_squares(fun,x0, method = 'lm', ftol=1e-12,xtol=1e-12,gtol=1e-12,
+    #                       args=(ts,ys))
 
     # TRF
-    #res_lsq = least_squares(fun,x0,
-    #                      ftol=1e-12,xtol=1e-12,gtol=1e-12,
-    #                      loss = 'cauchy', f_scale=0.1,
-    #                      args=(tdivs[start_fit:-1],offset_values[start_fit:]))
+    res_log = least_squares(funct,x0, ftol=1e-12,xtol=1e-12,gtol=1e-12,
+                            loss = 'cauchy', f_scale=0.1, args=(ts,ys))
     
-    #xs = res_lsq.x
+    # The results
+    xs = res_log.x
     #### END OF LEAST SQUARES
     
     #### NATURAL LOG
-    logs = np.log(offset_values[start_fit:end_fit])
-    coef2 = np.polyfit(tdivs[start_fit:end_fit],logs,1)
-    #print(coef2)
-    xs = [0,np.exp(coef2[1]),coef2[0]]
+    # Fit the baseline and get a function
+    #coef = np.polyfit(tdivs[:len_offset+1],values[:len_offset+1],1)
+    #poly1d_fn = np.poly1d(coef)
+    # Remove the baseline
+    #offset_values = values[:-1]-poly1d_fn(tdivs[:-1])
+    # Take the log
+    #logs = np.log(offset_values[start_fit:end_fit])
+    # Fit the log
+    #coef2 = np.polyfit(tdivs[start_fit:end_fit],logs,1)
+    # The results
+    #xs = (coef[1],np.exp(coef2[1]),coef2[0])
     #### END OF NATURAL LOG
 
-    #print(xs)
+    #print(xs)              # in case you want to see the fit parameters
+    
+    # Shows and saves tau to a list, timestamps to list as well
     tau = -1e6/xs[2]
     taus.append(tau)
     timenow = dt.datetime.now()
@@ -248,13 +278,15 @@ def animate(i):
     tstamp.append(stamp)
     print('TAU is: %.2f' %tau)
     
-    fita = offset_values[:start_fit]
-    fitb = xs[0]+xs[1]*np.exp(xs[2]*tdivs[start_fit:-1]) 
+    # Builds the fit = non fitted waveform + generated data from params
+    fita = waveform[:start_fit]
+    fitb = gendata(tdivs[start_fit:-1],*xs)
     fit = np.concatenate((fita,fitb))
     
-    line1.set_ydata(fit+poly1d_fn(tdivs[:-1]))
-    #print(len(values),offset_values.shape,fita.shape,fitb.shape,fit.shape)
-    line2.set_ydata(offset_values-fit)
+    # Plot fit
+    line1.set_ydata(fit)
+    # Plot residuals
+    line2.set_ydata(waveform-fit)
     
     # wavelength change
     if (i+1)% cycles == 0:
@@ -266,12 +298,16 @@ def animate(i):
             isblank = True
     # end 
     
+    # Total computing time in cycle, rest will be sleeping
     t3 = dt.datetime.now()
     print((t3-t1).total_seconds())
     sleep(runtime-(t3-t1).total_seconds())
-    #waitReady(lecroy,0.01)
+    #waitReady(lecroy,0.01) ### Deprecated due to problems with WaitReady()
+    
+    # Total cycle time
     t4 = dt.datetime.now()
     print((t4-t1).total_seconds())
+    
     return line, line1, line2,
 
 ## The call for the function that acts instead of a loop
@@ -284,15 +320,22 @@ plt.show()
 #### Some outputs for testing
 #print(len(values),data)
 #print(values)
+
+# Generates arrays to export to npy or txt
 taumat = np.array(taus)
 tstampmat = np.array(tstamp,dtype='U19')
-np.save('taus.npy', taumat)
-np.save('waveform.npy',waveform)
-np.save('timestamps.npy',tstampmat)
+
+# Saves NPY files
+#np.save('taus.npy', taumat) ### The taus as npy
+#np.save('waveform.npy',waveform) ### The last waveform as npy
+#np.save('timestamps.npy',tstampmat) ### The timestamps as npy
+
+# Saves TXT file: [timestamp tau]
 np.savetxt('testdata.txt',np.column_stack((tstampmat,taumat)),fmt='%s')
+
+### Some rough statistical data in case you want to know
 print('Average TAU: %.2f' %np.average(taumat))
 print('Stdev: %.2f' %np.std(taumat))
-
 
 
 #### Close resources
