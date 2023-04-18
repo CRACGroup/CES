@@ -42,17 +42,7 @@ def avantes_calibrator(length,intercept,c1,c2,c3):
     and the calibration factors, generates corrected wavelengths
     as a pixels x 1 array"""
     waves = []
-    for i in range(length):def avantes_calibrator(length,intercept,c1,c2,c3):
-    """Takes the length of ha spectrum (i.e. number of pixels)
-    and the calibration factors, generates corrected wavelengths
-    as a pixels x 1 array"""
-    waves = []
     for i in range(length):
-        pixel = i+1
-        wv= intercept+c1*pixel+c2*pow(pixel,2)+c3*pow(pixel,3)
-        waves.append(wv)
-    return np.array(waves).reshape(len(waves),1)
-
         pixel = i+1
         wv= intercept+c1*pixel+c2*pow(pixel,2)+c3*pow(pixel,3)
         waves.append(wv)
