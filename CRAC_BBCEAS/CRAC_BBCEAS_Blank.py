@@ -54,8 +54,18 @@ savepath = conf.savepath
 #########################################################################################
 ##### Making a subdirectory for generated files %Y%m%d
 
-directory = dt.datetime.now
+directory = dt.datetime.now().strftime('%Y%m%d')
+path = os.path.join(parent,directory)   # path of the folder wherein to store data
 
+# Tries to make a new folder with the current date, does nothing if folder already
+# exists
+
+try:
+    os.mkdir(path)
+except:
+    pass
+
+path_file = path + conf.folder_symbol   # full path to append filename when writing
 
 #########################################################################################
 #####               INSTRUMENT PREPARATION FOR SAMPLING                             #####
