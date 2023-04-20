@@ -115,10 +115,10 @@ wavelengths = cf.andor_calibrator(xpixels,*conf.calfactors)
 ### Initialize plot
 fig = plt.figure()              # Figure initialization
 ax1 = fig.add_subplot(111)      # Axes 1 : Signal
-ax1.set_ylim([0,500])
-xs = list(range(0,xpixels))
-ys = [0] * xpixels
-line, = ax1.plot(xs,ys,'-k')
+ax1.set_ylim([0,500])           # Set some limits for blank plot
+xs = list(range(0,xpixels))     # x axis
+ys = [0] * xpixels              # y axis
+line, = ax1.plot(xs,ys,'-k')    # unpacked line object for axes 1
 
 #t0 = dt.datetime.now() # testing for total elapsed time
 

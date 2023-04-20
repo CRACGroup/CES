@@ -50,7 +50,6 @@ accum_cycle = exptime + conf.delay                  # Exp + Delay = Cycle time
 readMode = conf.readMode                            # Read mode
 trigMode = conf.trigMode                            # Trigger Mode
 
-
 ### Path for saving data
 savepath = conf.savepath
 
