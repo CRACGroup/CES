@@ -161,10 +161,10 @@ line3, = ax3.plot(xs,ys,'-r')
 
 ### Initializing timestamp and concentration list, and measurement array
 measurements = np.array(background[:,0]).reshape(len(background[:,0]),1)
-meastime = np.zeros(samples,dtype='U19')
+meastime = []
 meastime2 = []
-ppbs = np.zeros(samples)
-ppbs2 = np.zeros(samples)
+ppbs = []
+ppbs2 = []
 
 # Perform Acquisition loop as an animate function
 
@@ -201,7 +201,7 @@ def animate(i):
     
     ### This one does everything (see recursive_fit_2ref function in CESfunctions.py)
     alpha,fl,a,b,ndensity1, ndensity2 = cf.fit_alg_1(I_sample, I_0, Reff, distance, 
-            no2ref,glyref,parameters=1)
+           no2ref,glyref,parameters=1)
     
     ### The timestamp for this measurement is now
     timenow = dt.datetime.now()
@@ -214,20 +214,26 @@ def animate(i):
     np.savetxt(path_file+'Is'+stamp+'.txt',measurements[:,[0,n+1]],fmt='%s')
 
     ### Populate ppbs and meastime arrays with currents sample, make/overwrite datafile
-    ppbs[n] = (ndensity1/2.504e10)/dfactor
-    ppbs2[n] = (ndensity2/2.504e10)/dfactor
-    meastime[n] = timenow.strftime('%Y/%m/%d-%H:%M:%S')
-    area[n] = np.trapz(counts[minwave:maxwave+1])
+    ppbs.append((ndensity1/2.504e10)/dfactor)
+    ppbs2.append((ndensity2/2.504e10)/dfactor)
+    meastime.append(timenow.strftime('%Y/%m/%d-%H:%M:%S'))
        
-    np.savetxt(path_file+'Mtemp.txt',np.column_stack((meastime[:n+1],ppbs[:n+1],
-        ppbs2[:n+1],area[:n+1])), fmt='%s')
+    np.savetxt(path_file+'Mtemp.txt',np.column_stack((meastime,ppbs,ppbs2)),fmt='%s')
 
     # Print calculated NO2 in ppb
     print('NO2 ppb: ', ppbs[n], 'CHOCHO ppb: ', ppbs2[n])
 
     ### Plotting
-    ax1.set_ylim([min(arr)-10,max(arr)+10])
-    line.set_ydata(arr)
+    # Plot 1 : Axes 1
+    ax1.set_ylim([bckg[0,0],bckg[-1,0]])
+    line.set_ydata(alpha)
+    line1.set_ydata(a+b*fl+no2ref[:,1]*ndensity1+glyref[:,1]*ndensity2)
+    
+    # Plot 2 : Axes 2
+    line2.set_xdata(meastime2)
+    ax2.xaxis.set_major_formatter(DateFormatter('%H:%M'))
+    line2.set_ydata(ppbs)
+    line3.set_ydata(ppbs2)
     
     return line, line1, line2, line3,
 
@@ -237,14 +243,14 @@ ani = animation.FuncAnimation(fig,animate, frames=bckg_shots
 plt.show()
 
 t1 = dt.datetime.now()                  # End time
+#print("Seconds elapsed: ",(t1-t0).total_seconds())
 
-#print("Seconds elapsed: ",(t1-t0).total_seconds()) #testing for total elapsed time
+# We save all measurements in a numpy file
+np.save(path_file + "Isamples" + t1.strftime("%y%m%d%H%M"), measurements)
 
-# we generate a name to save the background 
-blank_archive = "Ib" + t1.strftime("%y%m%d%H%M") +".txt"
-
-np.save("background", measurements)     # for use by BBCEAS_Measure
-np.savetxt(path_file + blank_archive, measurements)    # for archiving (further analysis)
+# We save all concentrations in a datafile
+np.savetxt(path_file + "M" + t1.strftime('%y%m%d%H%M') + '.txt',
+        np.column_stack((meastime,ppbs,ppbs2)), fmt='%s')
 
 #########################################################################################
 
