@@ -22,7 +22,7 @@ from time import sleep
 
 # Local
 import configurations as conf
-import AndorFunctions as andor
+import andorfunctions as andor
 sys.path.append('..')
 import py.CESfunctions_dev as cf
 
@@ -37,7 +37,7 @@ from pyAndorSDK2 import atmcd_errors as errors
 
 ### Instrument
 temp = conf.temp                                    # Camera temperature
-exptime = conf.exptime                              # Exposure time in seconds
+exptime = conf.exptime_blank                        # Exposure time in seconds
 bckg_shots = conf.bckg_shots                        # Number of background shots
                                                     # (for averaging in analysis)
 acqMode = conf.acqMode        
@@ -93,10 +93,11 @@ if errors.Error_Codes.DRV_SUCCESS != ret:
 # Configure the acquisition, lines outsourced to AndorFunctions.py
 try:
     andor.prepare_temperature(sdk,temp)
-except:
+except Exception as e:
+    print('Will exit due to following error:',e)
     sys.exit()
 
-xpixels = andor.prepare_camera(sdk,acqMode,readMode,trigmode,
+xpixels = andor.prepare_camera(sdk,acqMode,readMode,trigMode,
         accum_number,accum_cycle,exptime)
 
 
@@ -126,8 +127,11 @@ line, = ax1.plot(xs,ys,'-k')    # unpacked line object for axes 1
 measurements = np.copy(wavelengths).reshape(len(wavelengths),1)
 
 # Perform Acquisition loop as an animate function
+def init_func():
+    return line,
 
 def animate(i):
+    global measurements
     # Perform Acquisition
     # Uncomment the print statements for verbosity
     print("Acquisition number",i)
@@ -159,7 +163,8 @@ def animate(i):
     return line,
 
 # call animation
-ani = animation.FuncAnimation(fig,animate, frames=bckg_shots
+ani = animation.FuncAnimation(fig,animate,init_func=init_func,frames=bckg_shots, 
+                              repeat = False,
                               interval=1,blit=True,cache_frame_data=False)
 plt.show()
 
@@ -183,7 +188,7 @@ np.savetxt(path_file + blank_archive, measurements)    # for archiving (further 
 # Shuts down camera object to free the resource
 # Lines outsourced to AndorFunctions.py
 
-andor.shutdown_camera()
+andor.shutdown_camera(sdk)
 
 #########################################################################################
 print('Shape of measurements array:',measurements.shape)

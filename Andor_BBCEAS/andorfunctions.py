@@ -3,7 +3,8 @@
 
 from pyAndorSDK2 import atmcd
 from pyAndorSDK2 import atmcd_codes as codes
-from pyAndorSDK2 import atmcd_erors as errors
+from pyAndorSDK2 import atmcd_errors as errors
+from time import sleep
 
 def prepare_temperature(sdk,temp):
     '''
@@ -45,7 +46,7 @@ def prepare_temperature(sdk,temp):
         p += 1
     #### END Temperature stabilization
 
-def prepare_camera(sdk,acqMode,readMode,trigmode,accum_number,accum_cycle,exptime):
+def prepare_camera(sdk,acqMode,readMode,trigMode,accum_number,accum_cycle,exptime):
     ret = sdk.SetAcquisitionMode(acqMode)
     print("Function SetAcquisitionMode returned {}".format(ret))
 
@@ -80,7 +81,7 @@ def prepare_camera(sdk,acqMode,readMode,trigmode,accum_number,accum_cycle,exptim
     print("Function PrepareAcquisition returned {}".format(ret))
     return xpixels
 
-def  shutdown_camera():
+def shutdown_camera(sdk):
     (ret, status) = sdk.GetStatus()
     print("Function GetStatus returned {} with status {}".format(ret,status))
 

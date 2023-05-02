@@ -35,21 +35,22 @@ accums = 3
 delay = 0.5
 
 # Exposure time. 
-exptime = 0.1
+exptime_sample = 5
+exptime_blank = 1
 
 # Camera temperature
 temp = -10
 
 # Number of backgrounds to take
-bckg_shots = 1
+bckg_shots = 10
 
 ### The following are signal analysis parameters (not used in Blank, only Sample)
 # Distance, the optical length of the sample (this is a physcal cavity parameter)
 distance = 70
 
 # The resonance window, lower (start) and upper (end) wavelengths
-lower_wavelength = 445
-upper_wavelength = 459
+lower_wavelength = 300
+upper_wavelength = 400
 
 # Reference and background filenames to load, they should be located in the local dir
 back_filename = "background.npy"
