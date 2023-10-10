@@ -37,14 +37,15 @@ offset=0.35
 
 
 # Number of accumulations 
-accums = 1
+accums = 100
 
 # Accumulation cycle delay (Exp + Delay = Cycle time)
-delay = 0.5
+# if your exposure time is short, this can add a lot of overhead so choose a number that is small (5-10 miliseconds maybe)
+delay = 0.005
 
 # Exposure time. 
-exptime_sample = 10
-exptime_blank = 10
+exptime_sample = .1
+exptime_blank = .1
 
 # Camera temperature
 temp = -30

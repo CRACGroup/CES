@@ -1,13 +1,18 @@
 #########################################################################################
-# This script configures the DV401 CCD plugged via the CCI-001 PCI Card                 #
+# This script configures the Newton CCD plugged via USB                                 #
 # to take FVB single scans or accumulations for real time trace gas                     #
 # concentration analysis using SVD.                                                     #
-#                                                                                       #
+# Also controls the Shamrock spectrograph to open the shutter                           #
 # IMPORTANT. PLEASE MAKE SURE YOU KNOW ABOUT THE WARNING REGARDING COOLING BELOW -20C.  #
 # YOU MUST LET IT COOL TO >-20C (PREFERABLY 0C) USING COOLEROFF() BEFORE USING SHUTDOWN #
 # AND KEEP THIS IN MIND IF THERE IS AN EXCEPTION OR EXIT TO DESKTOP EVENT               #
 #                                                                                       #
-# Created by Mixtli Campos on 22/2/2023                                                 #
+# NOTE: I have not found a way yet to make the WaitForAcquisition() function to wait    #
+#       for a full accumulation event (only waits until single shot is done) so the     #
+#       accumulation is done by the script this sums the individual wait overhead for   #
+#       a total overhead of 50% for exposure times of 0.1                               #
+#                                                                                       #
+# Created by Mixtli Campos on 04/10/2023                                                #
 # mcampos@ucc.ie                                                                        #
 #########################################################################################
 
@@ -23,11 +28,12 @@ from time import sleep
 # Local
 import configurations as conf
 import andorfunctions as andor
-sys.path.append('..')
-import py.CESfunctions_dev as cf
+#sys.path.append('..')
+import CESfunctionsJUNOx23 as cf
 
 # The pyAndorSDK2 is a proprietary package from the ANDOR SDK
 from pyAndorSDK2 import atmcd
+from pyAndorSpectrograph.spectrograph import ATSpectrograph
 from pyAndorSDK2 import atmcd_codes as codes
 from pyAndorSDK2 import atmcd_errors as errors
 
@@ -97,9 +103,24 @@ except Exception as e:
     print('Will exit due to following error:',e)
     sys.exit()
 
+# We are manually summing the individual scans so there is 1 instead of accum_number,
+# accum_number will be used for the loop inside the animate function
 xpixels = andor.prepare_camera(sdk,acqMode,readMode,trigMode,
-        accum_number,accum_cycle,exptime)
+                               1,accum_cycle,exptime)
+                               #accum_number,accum_cycle,exptime)
 
+# Initializing the spectrograph to open shutter
+#Load libraries
+spc = ATSpectrograph()
+
+#Initialize libraries
+shm = spc.Initialize("")
+print("Function Initialize returned {}".format(
+    spc.GetFunctionReturnDescription(shm, 64)[1]))
+
+shm = spc.SetShutter(0,1)
+print("Function SetShutter returned: {}".format(
+            spc.GetFunctionReturnDescription(shm, 64)[1],))
 
 #########################################################################################
 ### Calculating the wavelengths with the calibration factors from configuration file  ###
@@ -107,7 +128,7 @@ xpixels = andor.prepare_camera(sdk,acqMode,readMode,trigMode,
 #wavelengths = cf.andor_calibrator(xpixels,*conf.calfactors)
 
 ## NOTE: For spectrographs that are already in wavelengths (i.e. no calfactors)
-##       we will take the wavelengths right from a reference spectrum
+##       we will take the wavelengths right from a reference spectrum (already offset)
 ref_waves = np.load("HONO_IASC.npy")
 wavelengths = np.copy(ref_waves[:,0]) 
 
@@ -142,28 +163,31 @@ def animate(i):
     # Uncomment the print statements for verbosity
     print("Acquisition number",i)
     
-    ret = sdk.StartAcquisition()
-    #print("Function StartAcquisition returned {}".format(ret))
+    counts = np.zeros(xpixels)
+    for j in range(accum_number):
+        ret = sdk.StartAcquisition()
+        #print("Function StartAcquisition returned {}".format(ret))
     
-    #tt1=dt.datetime.now() # for testing wait delay 
+        #tt1=dt.datetime.now() # for testing wait delay 
     
-    ret = sdk.WaitForAcquisition()
-    #print("Function WaitForAcquisition returned {}".format(ret))
+        ret = sdk.WaitForAcquisition()
+        #print("Function WaitForAcquisition returned {}".format(ret))
     
-    #tt2=dt.datetime.now() # for testing wait delay
-    #print((tt2-tt1).total_seconds())
+        #tt2=dt.datetime.now() # for testing wait delay
+        #print((tt2-tt1).total_seconds())
 
-    (ret, arr, validfirst, validlast) = sdk.GetImages16(1, 1, xpixels)
-    #print("Function GetImages16 returned {} first pixel = {} size = {}".format(
-    #    ret, arr[0], xpixels))
-    #print(arr.shape)
+        (ret, arr, validfirst, validlast) = sdk.GetImages16(1, 1, xpixels)
+        #print("Function GetImages16 returned {} first pixel = {} size = {}".format(
+        #    ret, arr[0], xpixels))
+        #print(arr.shape)
+        counts = counts + arr
 
     ### Plotting
-    ax1.set_ylim([min(arr)-10,max(arr)+10])
-    line.set_ydata(arr)
+    ax1.set_ylim([min(counts)-10,max(counts)+10])
+    line.set_ydata(counts)
     
     ### Making arrays
-    counts = np.copy(arr).reshape(len(arr),1)
+    counts = counts.reshape(len(counts),1)
     measurements = np.concatenate((measurements,counts),axis=1)
 
     return line,
@@ -195,7 +219,9 @@ np.savetxt(path_file + blank_archive, measurements)    # for archiving (further 
 # Lines outsourced to AndorFunctions.py
 
 andor.shutdown_camera(sdk)
-
+shm = spc.Close()
+print("Function Close returned {}".format(
+        spc.GetFunctionReturnDescription(shm, 64)[1]))
 #########################################################################################
 print('Shape of measurements array:',measurements.shape)
 print('bye')
