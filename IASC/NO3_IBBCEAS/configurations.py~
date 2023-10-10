@@ -62,9 +62,9 @@ upper_wavelength = 672
 
 # Reference and background filenames to load, they should be located in the local dir
 back_filename = "background.npy"
-#no2_refname = "NO2_JUNOx23.npy"
+no2_refname = "NO2_JUNOx23.npy"
 no3_refname = "NO3_IASC.npy"
-#chocho_refname = "CHOCHO_JUNOx23.npy"
+chocho_refname = "CHOCHO_JUNOx23.npy"
 zero_filename = "zero.npy"
 
 # Effective Reflectivity, check lab notebook on more information, can be a vector 

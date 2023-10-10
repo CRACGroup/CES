@@ -208,7 +208,7 @@ def animate(i):
     ### This one does everything (see recursive_fit_2ref function in CESfunctions.py)
     try:
         alpha,fl,a,b,ndensity1 = cf.fit_alg_1A_it(I_sample, I_0, Reff, distance, 
-        no2ref,pPa,tK,parameters=1)
+        no3ref,pPa,tK,parameters=1)
     except Exception as e:
         print("fit_alg_1A failed with exception:")
         print(e)
@@ -232,7 +232,7 @@ def animate(i):
     np.savetxt(path_file+'Mtemp.txt',np.column_stack((meastime,ppbs)),fmt='%s')
 
     # Print calculated NO2 in ppb
-    print('NO2 ppb: ', ppbs[-1])
+    print('NO3 ppb: ', ppbs[-1])
 
     ### Plotting
     # Plot 1 : Axes 1
@@ -240,7 +240,7 @@ def animate(i):
     #print('Getting first plot')
     ax1.set_ylim([min(alpha),max(alpha)])
     line.set_ydata(alpha)
-    line1.set_ydata(a+b*fl+no2ref[:,1]*ndensity1+glyref[:,1]*ndensity2)
+    line1.set_ydata(a+b*fl+no3ref[:,1]*ndensity1)
     
     # Plot 2 : Axes 2
     #print('Getting second plot')
@@ -256,7 +256,7 @@ def animate(i):
     return line, line1, line2, 
 
 # call animation
-ani = animation.FuncAnimation(fig,animate, init_func=init_func
+ani = animation.FuncAnimation(fig,animate, init_func=init_func,
                               interval=1,blit=False,cache_frame_data=False)
 plt.show()
 

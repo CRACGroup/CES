@@ -260,7 +260,7 @@ def animate(i):
     ppbs2.append(conc2)
     meastime.append(timenow.strftime('%Y/%m/%d-%H:%M:%S'))
        
-    np.savetxt(path_file+'Mtemp.txt',np.column_stack((meastime,ppbs,ppbs2)),fmt='%s')
+    np.savetxt(path_file+'Mtemp.txt',np.column_stack((meastime,ppbs)),fmt='%s')
 
     # Print calculated NO2 in ppb
     print('NO2 ppb: ', ppbs[-1])
