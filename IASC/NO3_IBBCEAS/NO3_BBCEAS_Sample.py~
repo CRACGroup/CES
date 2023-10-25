@@ -231,7 +231,7 @@ def animate(i):
        
     np.savetxt(path_file+'Mtemp.txt',np.column_stack((meastime,ppbs)),fmt='%s')
 
-    # Print calculated NO2 in ppb
+    # Print calculated NO3 in ppb
     print('NO3 ppb: ', ppbs[-1])
 
     ### Plotting

@@ -28,16 +28,16 @@ trigMode = codes.Trigger_Mode.INTERNAL
 #FOR NO2 at 405 (JUNOx23)
 #calfactors=(3.10322588e+02-3.3, 1.72905279e-01,
 #            -1.48816626e-05,1.95619706e-09)
-#FOR NO3 11/09/2023
-calfactors=(6.9664720862e+02, -1.2308600988e-01,
-            -8.6814165183e-06,8.0507623387e-10)
+#FOR NO3 25/10/2023 SLIT OFF
+calfactors=(7.092125e+02,-1.173492e-01,
+            -1.805713e-05,6.237604e-09)
 
 
 # Number of accumulations 
 accums = 1
 
 # Accumulation cycle delay (Exp + Delay = Cycle time)
-delay = 0.05
+delay = 0.1
 
 # Exposure time. 
 exptime_sample = 10
