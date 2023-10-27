@@ -11,7 +11,7 @@ from pyAndorSDK2 import atmcd_codes as codes
 ### Both Blank and Sample store data to a subdirectory, windows and linux system use 
 ### different symbols, "\\" for windows, "/" for linux
 folder_symbol = "\\"
-savepath = "C:\\IBBCEAS\\Data"
+savepath = "C:\\CRAC\\Data\\Instruments\\NO3_IBBCEAS"
 
 
 ### The following are instrument configurations (used in both Blank and Sample)
@@ -44,7 +44,7 @@ exptime_sample = 10
 exptime_blank = 10
 
 # Camera temperature
-temp = -30
+temp = -20
 
 # Measurement to start average
 start_avg = 2

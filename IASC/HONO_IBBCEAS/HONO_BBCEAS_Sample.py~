@@ -19,7 +19,6 @@ import matplotlib.animation as animation
 import datetime as dt
 import numpy as np
 from time import sleep
-from matplotlib.dates import DateFormatter
 
 # Local
 import configurations as conf
@@ -300,7 +299,7 @@ np.save(path_file + "Imeas" + t1.strftime("%y%m%d%H%M"), measurements)
 
 # We save all concentrations in a datafile
 np.savetxt(path_file + "M" + t1.strftime('%y%m%d%H%M') + '.txt',
-        np.column_stack((meastime,ppbs,ppbs2)), fmt='%s')
+        np.column_stack((meastime,ppbs)), fmt='%s')
 
 #########################################################################################
 

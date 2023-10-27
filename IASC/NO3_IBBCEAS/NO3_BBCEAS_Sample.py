@@ -19,12 +19,12 @@ import matplotlib.animation as animation
 import datetime as dt
 import numpy as np
 from time import sleep
+from matplotlib.dates import DateFormatter
 
 # Local
 import configurations as conf
-import AndorFunctions as andor
-sys.path.append('..')
-import py.CESfunctions_dev as cf
+import andorfunctions as andor
+import CESfunctionsJUNOx23 as cf
 
 # The pyAndorSDK2 is a proprietary package from the ANDOR SDK
 from pyAndorSDK2 import atmcd
@@ -37,7 +37,7 @@ from pyAndorSDK2 import atmcd_errors as errors
 
 ### Instrument 
 temp = conf.temp                                    # Camera temperature
-exptime = conf.exptime                              # Exposure time in seconds
+exptime = conf.exptime_sample                       # Exposure time in seconds
 bckg_shots = conf.bckg_shots                        # Number of background shots
                                                     # (for averaging in analysis)
 acqMode = conf.acqMode        
@@ -123,7 +123,7 @@ try:
 except:
     sys.exit()
 
-xpixels = andor.prepare_camera(sdk,acqMode,readMode,trigmode,
+xpixels = andor.prepare_camera(sdk,acqMode,readMode,trigMode,
         accum_number,accum_cycle,exptime)
 
 
@@ -202,6 +202,7 @@ def animate(i):
     no3ref = np.copy(no3reference[minwave:maxwave,:])
     I_sample = np.copy(counts[minwave:maxwave,:])
     I_0 = np.average(bckg[:,1:],axis=1).reshape(len(bckg),1)
+    #print(bckg.shape,no3ref.shape,I_sample.shape,I_0.shape)
     pPa = 101335
     tK = 293.15
     
@@ -212,7 +213,7 @@ def animate(i):
     except Exception as e:
         print("fit_alg_1A failed with exception:")
         print(e)
-        continue
+        pass
     
     ### The timestamp for this measurement is now
     timenow = dt.datetime.now()
@@ -280,7 +281,7 @@ np.savetxt(path_file + "M" + t1.strftime('%y%m%d%H%M') + '.txt',
 # Shuts down camera object to free the resource
 # Lines outsourced to AndorFunctions.py
 
-andor.shutdown_camera()
+andor.shutdown_camera(sdk)
 
 #########################################################################################
 print('Shape of measurements array:',measurements.shape)

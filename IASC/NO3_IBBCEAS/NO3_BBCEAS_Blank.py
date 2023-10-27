@@ -23,8 +23,7 @@ from time import sleep
 # Local
 import configurations as conf
 import andorfunctions as andor
-sys.path.append('..')
-import py.CESfunctions_dev as cf
+import CESfunctionsJUNOx23 as cf
 
 # The pyAndorSDK2 is a proprietary package from the ANDOR SDK
 from pyAndorSDK2 import atmcd
