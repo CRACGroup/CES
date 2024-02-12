@@ -29,9 +29,11 @@ trigMode = codes.Trigger_Mode.INTERNAL
 #calfactors=(3.10322588e+02-3.3, 1.72905279e-01,
 #            -1.48816626e-05,1.95619706e-09)
 #FOR NO3 25/10/2023 SLIT OFF
-calfactors=(7.092125e+02,-1.173492e-01,
-            -1.805713e-05,6.237604e-09)
-
+#calfactors=(7.092125e+02,-1.173492e-01,
+#            -1.805713e-05,6.237604e-09)
+#NO3 slit ON 07/11/2023
+calfactors=(7.090964e+02,-1.167403e-01,
+            -1.903367e-05,6.759619e-09)
 
 # Number of accumulations 
 accums = 1
@@ -44,7 +46,7 @@ exptime_sample = 10
 exptime_blank = 10
 
 # Camera temperature
-temp = -20
+temp = -30
 
 # Measurement to start average
 start_avg = 2
@@ -63,7 +65,7 @@ upper_wavelength = 672
 # Reference and background filenames to load, they should be located in the local dir
 back_filename = "background.npy"
 #no2_refname = "NO2_JUNOx23.npy"
-no3_refname = "NO3_IASC.npy"
+no3_refname = "NO3_IASC_1.npy"
 #chocho_refname = "CHOCHO_JUNOx23.npy"
 zero_filename = "zero.npy"
 

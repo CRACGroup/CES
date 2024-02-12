@@ -6,6 +6,19 @@ from pyAndorSDK2 import atmcd_codes as codes
 from pyAndorSDK2 import atmcd_errors as errors
 from time import sleep
 
+def take_measurement(sdk,xpixels):
+    '''
+    Takes sdk object and xpixels, starts acquisition, waits until done, gets array
+    and returns as arr
+    '''
+    ret = sdk.StartAcquisition()
+    
+    ret = sdk.WaitForAcquisition()
+
+    (ret,arr,validfirst,validlast) = sdk.GetImages16(1,1,xpixels)
+
+    return arr
+
 def prepare_temperature(sdk,temp):
     '''
     Takes the sdk object and the temperature, sets the temperature and 

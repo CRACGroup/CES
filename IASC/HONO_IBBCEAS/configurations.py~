@@ -73,8 +73,8 @@ zero_filename = "zero.npy"
 
 # Effective Reflectivity, check lab notebook on more information, can be a vector 
 # to call using np.load, or it can be a constant
-# Reff = np.load('Reff.npy')
-Reff = 0.998
+#Reff = np.load('Reff.npy')
+Reff = 0.998182
 scale_index = 58
 
 # Dilution factor, units are sccm
