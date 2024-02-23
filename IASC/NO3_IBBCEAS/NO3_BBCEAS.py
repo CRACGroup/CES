@@ -74,6 +74,7 @@ upper_wavelength=conf.upper_wavelength      # Ending wavelength of resonance win
 # Reference and background files
 back_filename = conf.back_filename
 no3_refname = conf.no3_refname
+no2_refname = conf.no2_refname
 
 # Start average from measure #
 start_avg = conf.start_avg
@@ -90,6 +91,7 @@ savepath = conf.savepath
 
 #########################################################################################
 ### Reference and Background file loading for analisis                                ###
+no2reference = np.load(no2_refname)
 no3reference = np.load(no3_refname)
 
 #########################################################################################
@@ -136,7 +138,7 @@ except:
     sys.exit()
 
 xpixels = andor.prepare_camera(sdk,acqMode,readMode,trigMode,
-                               1,accum_cycle,exptime)
+                                1,accum_cycle,exptime)
                                #accum_number,accum_cycle,exptime)
 
 #########################################################################################
@@ -144,13 +146,13 @@ def run_background(sdk,xpixels,accum_number,measurements,path_file):
     for j in range(bckg_shots):
         print("Background number",j)
         counts = np.zeros(xpixels)
-
+            
         for k in range(accum_number):
             arr = andor.take_measurement(sdk,xpixels)
             counts = counts + arr
 
         np.save("ax1data",np.column_stack((np.arange(1,xpixels+1,1),counts)))
-
+            
         counts = counts.reshape(len(counts),1)
         measurements = np.concatenate((measurements,counts),axis=1)
     t1=dt.datetime.now()    
@@ -159,13 +161,13 @@ def run_background(sdk,xpixels,accum_number,measurements,path_file):
     np.savetxt(path_file + blank_archive, measurements) #for archiving (further analysis)
 
 
-def run_sample(back_filename,xpixels,accum_number,sdk,no3reference,
+def run_sample(back_filename,xpixels,accum_number,sdk,no3reference,no2reference,
         distance,measurements):
     background = np.load(back_filename)
     meastime = []
     meastime2 = []
     ppbs = []
-
+    ppbs2 = []
     l=1
     while True:
         try:
@@ -180,7 +182,7 @@ def run_sample(back_filename,xpixels,accum_number,sdk,no3reference,
 
             # We save all concentrations in a datafile
             np.savetxt(path_file + "M" + t1.strftime('%y%m%d%H%M') + '.txt',
-            np.column_stack((meastime,ppbs)), fmt='%s')
+            np.column_stack((meastime,ppbs,ppbs2)), fmt='%s')
             break
 
         except:
@@ -198,6 +200,7 @@ def run_sample(back_filename,xpixels,accum_number,sdk,no3reference,
             upper_wavelength)
         bckg = np.copy(background[minwave:maxwave,:])
         no3ref = np.copy(no3reference[minwave:maxwave,:])
+        no2ref = np.copy(no2reference[minwave:maxwave,:])
         I_sample = np.copy(counts[minwave:maxwave,:])
         I_0 = np.average(bckg[:,1:],axis=1).reshape(len(bckg),1)
         pPa = 101335
@@ -205,10 +208,10 @@ def run_sample(back_filename,xpixels,accum_number,sdk,no3reference,
     
         ### This one does everything (see recursive_fit_2ref function in CESfunctions.py)
         try:
-            alpha,fl,a,b,ndensity1 = cf.fit_alg_1A_it(I_sample, I_0, Reff, 
-                    distance,no3ref,pPa,tK,parameters=1)
+            alpha,fl,a,b,ndensity1 = cf.fit_alg_1B_it(I_sample, I_0, Reff,
+                    distance,no3ref,no2ref,pPa,tK,parameters=1)
         except Exception as e:
-            print("fit_alg_1A_it failed with exception:")
+            print("fit_alg_1B_it failed with exception:")
             print(e)
             pass
         
@@ -226,19 +229,23 @@ def run_sample(back_filename,xpixels,accum_number,sdk,no3reference,
         ### Populate ppbs and meastime arrays with current sample
         ###make/overwrite datafile
         conc = (ndensity1*1e15*1.380649e-23*tK/pPa)
+        conc2 = ndensity2*1e15*1.380649e-23*tK/pPa)
         ppbs.append(conc)
+        ppbs2.append(conc2)
         meastime.append(timenow.strftime('%Y/%m/%d-%H:%M:%S'))
        
-        np.savetxt(path_file+'Mtemp.txt',np.column_stack((meastime,ppbs)),fmt='%s')
+        np.savetxt(path_file+'Mtemp.txt',np.column_stack((meastime,ppbs,ppbs2)),fmt='%s')
 
         # Print calculated NO2 in ppb
         print('NO3 ppb: ', ppbs[-1])
+        print('NO2 ppb: ', ppbs2[-1])
         
         wavt = np.copy(no3ref[:,0]).reshape(len(no3ref[:,0]),1)
         np.save("ax2data", np.concatenate((wavt,alpha),axis=1))
         np.save("ax2adata", np.column_stack((no3ref[:,0],
-            a+b*fl+no3ref[:,1]*ndensity1)))
+            a+b*fl+no3ref[:,1]*ndensity1+no2ref[:,1]*ndensity2)))
         np.save("ax3data", np.column_stack((meastime2,ppbs)))
+        np.save("ax4data", np.column_stack((meastime2,ppbs2)))
         l+=1
 
 
@@ -265,7 +272,7 @@ while True:
         
             print("Finished background, will proceed to sample.")
             measurements = np.array(no3reference[:,0]).reshape(len(no3reference[:,0]),1)
-            run_sample(back_filename,xpixels,accum_number,sdk,no3reference,
+            run_sample(back_filename,xpixels,accum_number,sdk,no3reference,no2reference,
                         distance,measurements)
            
         #elif choice.lower() == b:
@@ -273,7 +280,7 @@ while True:
             pid = subprocess.Popen(["python","IBBCEAS_plotter.py"]).pid
             print("Will proceed to sample.")
             measurements = np.array(no3reference[:,0]).reshape(len(no3reference[:,0]),1)
-            run_sample(back_filename,xpixels,accum_number,sdk,no3reference,
+            run_sample(back_filename,xpixels,accum_number,sdk,no3reference,no2reference,
                         distance,measurements)
 
         elif choice.lower() == 'e':

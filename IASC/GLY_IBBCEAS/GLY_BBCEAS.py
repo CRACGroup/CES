@@ -161,7 +161,7 @@ def run_background(sdk,xpixels,accum_number,measurements,path_file):
     np.savetxt(path_file + blank_archive, measurements) #for archiving (further analysis)
 
 
-def run_sample(back_filename,xpixels,accum_number,sdk,no3reference,
+def run_sample(back_filename,xpixels,accum_number,sdk,no2reference,glyreference,
         distance,measurements):
     background = np.load(back_filename)
     meastime = []
@@ -269,7 +269,7 @@ while True:
         
             print("Finished background, will proceed to sample.")
             measurements = np.array(no2reference[:,0]).reshape(len(no2reference[:,0]),1)
-            run_sample(back_filename,xpixels,accum_number,sdk,no2reference,
+            run_sample(back_filename,xpixels,accum_number,sdk,no2reference,glyreference,
                         distance,measurements)
            
         #elif choice.lower() == b:
@@ -277,7 +277,7 @@ while True:
             pid = subprocess.Popen(["python","IBBCEAS_plotter.py"]).pid
             print("Will proceed to sample.")
             measurements = np.array(no2reference[:,0]).reshape(len(no2reference[:,0]),1)
-            run_sample(back_filename,xpixels,accum_number,sdk,no2reference,
+            run_sample(back_filename,xpixels,accum_number,sdk,no2reference,glyreference,
                         distance,measurements)
 
         elif choice.lower() == 'e':

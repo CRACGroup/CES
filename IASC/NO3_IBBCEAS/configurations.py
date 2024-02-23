@@ -36,14 +36,14 @@ calfactors=(7.090964e+02,-1.167403e-01,
             -1.903367e-05,6.759619e-09)
 
 # Number of accumulations 
-accums = 1
+accums = 40
 
 # Accumulation cycle delay (Exp + Delay = Cycle time)
-delay = 0.1
+delay = 0.05
 
 # Exposure time. 
-exptime_sample = 10
-exptime_blank = 10
+exptime_sample = .25
+exptime_blank = .25
 
 # Camera temperature
 temp = -30
@@ -64,14 +64,14 @@ upper_wavelength = 672
 
 # Reference and background filenames to load, they should be located in the local dir
 back_filename = "background.npy"
-#no2_refname = "NO2_JUNOx23.npy"
+no2_refname = "NO2_IASC_3.npy"
 no3_refname = "NO3_IASC_1.npy"
 #chocho_refname = "CHOCHO_JUNOx23.npy"
 zero_filename = "zero.npy"
 
 # Effective Reflectivity, check lab notebook on more information, can be a vector 
 # to call using np.load, or it can be a constant
-Reff = 0.99999
+Reff = 0.999925
 scale_index = 58
 
 # Dilution factor, units are sccm
