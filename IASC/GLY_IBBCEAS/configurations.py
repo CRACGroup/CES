@@ -45,14 +45,14 @@ calfactors=(3.617668e2,+1.912843e-01,
             -1.823635e-4,1.755334e-7)
 
 # Number of accumulations 
-accums = 1
+accums = 5
 
 # Accumulation cycle delay (Exp + Delay = Cycle time)
 delay = 0.1
 
 # Exposure time. 
-exptime_sample = 4
-exptime_blank = 4
+exptime_sample = 2
+exptime_blank = 2
 
 # Camera temperature
 temp = -30
@@ -80,7 +80,7 @@ zero_filename = "zero.npy"
 
 # Effective Reflectivity, check lab notebook on more information, can be a vector 
 # to call using np.load, or it can be a constant
-Reff = 0.99999
+Reff = 0.99915
 scale_index = 58
 
 # Dilution factor, units are sccm
