@@ -1,0 +1,146 @@
+import os
+import subprocess
+import datetime as dt
+import numpy as np
+from time import sleep
+
+# Local
+import configurations_CEAS360 as conf
+import andorfunctions as andor
+import CESfunctionsIASC as cf
+
+# The pyAndorSDK2 is a proprietary package from the ANDOR SDK
+from pyAndorSDK2 import atmcd
+from pyAndorSpectrograph.spectrograph import ATSpectrograph
+from pyAndorSDK2 import atmcd_codes as codes
+from pyAndorSDK2 import atmcd_errors as errors
+
+# Tkinter
+import tkinter as tk
+from tkinter import ttk
+
+class App:
+    def __init__(self,root=tk.Tk()):
+        self.root = root
+        self.root.resizable(False, False)
+        ### The following grid_columnconfigure statemets make all the columns to belong to the same group, will have the
+        ### size of the largest widget
+        #self.root.grid_columnconfigure(0, weight=1, uniform="fred")
+        #self.root.grid_columnconfigure(1, weight=1, uniform="fred")
+        #self.root.grid_columnconfigure(2, weight=1, uniform="fred")
+        #self.root.grid_columnconfigure(3, weight=1, uniform="fred")
+        #self.root.grid_columnconfigure(4, weight=1, uniform="fred")
+        #self.root.grid_columnconfigure(5, weight=1, uniform="fred")
+        #self.root.grid_columnconfigure(6, weight=1, uniform="fred")
+        self.root.title('IBBCEAS Control GUI')
+
+        ### Initialising SDK
+        self.the_dev = IBM4_Lib.Ser_Iface() # find the first connected IBM4, open in DC mode by default
+
+        ### Initialising dictionary for variables
+        self.keyvars = {}
+
+        ### Frame 1: Radiobuttons
+        self.frame1 = tk.Frame(self.root)
+        self.radio = Radiobutton(self.frame1,'Full run;Backgrounds;Measurements', 'print(self.mssg)')
+        self.frame1.grid(row=1,column=0,columnspan=15,sticky='we')
+
+        # Add windows where we are going to write the std output.
+        self.console_text = tk.Text(self.root, state='disabled', height=10)
+        self.console_text.grid(row=2,column=0,rowspan=10,columnspan=15,sticky='we')
+
+        # We redirect sys.stdout -> TextRedirector
+        self.redirect_sysstd()
+
+        # We add a button to test our setup
+        self.test_button = tk.Button(self.root, text="Run", command=self.run_mode)
+        self.test_button.grid(row=12,column=0)
+
+        self.voutval = tk.StringVar(value='0')
+        tk.Label(text='Vout :').grid(row=12,column=1,sticky='e')
+        tk.Entry(root, textvariable=self.voutval, width=10).grid(row=12,column=2,sticky='w')
+
+        self.pwmpc = tk.StringVar(value='0')
+        tk.Label(text='PWM % :').grid(row=12,column=3,sticky='e')
+        tk.Entry(root, textvariable=self.pwmpc, width=10).grid(row=12,column=4,sticky='w')
+
+        self.diffch = tk.StringVar(value='A2,A3')
+        tk.Label(text='Diff. Channels (+,-) :').grid(row=12,column=5,sticky='e')
+        tk.Entry(root, textvariable=self.diffch, width=10).grid(row=12,column=6,sticky='w')
+
+    def redirect_sysstd(self):
+        # We specify that sys.stdout point to TextRedirector
+        sys.stdout = TextRedirector(self.console_text, "stdout")
+        sys.stderr = TextRedirector(self.console_text, "stderr")
+
+    def run_mode(self):
+        print('Now running: '+self.radio.item)
+        action = self.radio.val.get()
+        ## ADAPTED FROM ROBS MULTIMETER MODE
+        if action == 0:
+            self.the_dev.IDNPrompt()
+        elif action == 1:
+            self.the_dev.WriteVoltage('A0', float(self.voutval.get()))
+        elif action == 2:
+            self.the_dev.WriteVoltage('A1', float(self.voutval.get()))
+        elif action == 3:
+            self.thedev.WritePWM(float(self.pwmpc.get()))
+        elif action == 4:
+            self.the_dev.ZeroIBM4()
+        elif action == 5:
+            ch_vals = self.the_dev.ReadAverageVoltageAllChnnl()
+            print('AI voltages: ',ch_vals)
+        elif action == 6:
+            chns = self.diffch.get().split(',')
+            diff_res = self.the_dev.DiffReadMultiple(chns[0], chns[1])
+            print('Differential Read Value = %(v1)0.3f +/- %(v2)0.3f (V)'%{"v1":diff_res[0], "v2":diff_res[1]})
+        #del the_dev # destructor for the IBM4 object, closes comms
+
+class LabelEntry:
+    def __init__(self,place,keyvars={'Entry':'0'}):
+        sef.val = tk.StringVar()
+        for k,v in keyvars.times():
+            r = tk.Radiobutton(place, text=item, variable=self.val,
+                                value=i, command=self.cb, **kwargs)
+            r.grid(row=1,column=i)#,sticky='w')
+            #r.pack(side=tk.LEFT)
+
+class Radiobutton:
+    """Create a list-based Radiobutton object."""
+
+    def __init__(self, place, items='Radiobutton', cmd='', val=0, **kwargs):
+        self.items = items.split(';')
+        self.cmd = cmd
+        self.val = tk.IntVar()
+        self.val.set(val)
+        self.item = self.items[self.val.get()]
+        for i, item in enumerate(self.items):
+            r = tk.Radiobutton(place, text=item, variable=self.val,
+                                value=i, command=self.cb, **kwargs)
+            r.grid(row=1,column=i)#,sticky='w')
+            #r.pack(side=tk.LEFT)
+    def cb(self):
+        """Evaluate the cmd string in the Radiobutton context."""
+        self.item = self.items[self.val.get()]
+        self.mssg = 'Mode '+self.item+' selected'
+        exec(self.cmd)
+
+class TextRedirector(object):
+    def __init__(self, widget, tag):
+        self.widget = widget
+        self.tag = tag
+
+    def write(self, text):
+        self.widget.configure(state='normal') # Edit mode
+        self.widget.insert(tk.END, text, (self.tag,)) # insert new text at the end of the widget
+        self.widget.configure(state='disabled') # Static mode
+        self.widget.see(tk.END) # Scroll down
+        self.widget.update_idletasks() # Update the console
+
+    def flush(self):
+        pass
+
+if __name__ == "__main__":
+    app = App()
+    app.root.mainloop()
+

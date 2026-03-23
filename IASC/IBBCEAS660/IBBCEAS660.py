@@ -200,7 +200,7 @@ def run_sample(back_filename,xpixels,accum_number,sdk,reference1,reference2,refe
         for j in range(accum_number):
             arr = andor.take_measurement(sdk,xpixels)
             counts = counts + arr
-
+        np.save("ax1adata",np.column_stack((np.arange(1,xpixels+1,1),counts)))
         ### Calculating number density
         counts = counts.reshape(len(counts),1)
         minwave,maxwave = cf.segment_indices(background,lower_wavelength,

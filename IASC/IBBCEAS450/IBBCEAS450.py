@@ -204,7 +204,7 @@ def run_sample(back_filename,xpixels,accum_number,sdk,reference1,reference2,#ref
         minwave,maxwave = cf.segment_indices(background,lower_wavelength,
             upper_wavelength)
         bckg = np.copy(background[minwave:maxwave,:])
-        ref1 = np.copy(reference1) ### homemade spectrum, 2 cols
+        ref1 = np.copy(reference1[minwave:maxwave,:]) ### homemade spectrum, 2 cols
         ref2 = np.copy(reference2[minwave:maxwave,:])
         #ref3 = np.copy(np.column_stack((ref1[:,0],reference3))) ### homemade spectrum, only extinction (1 col)
         sigma_ray = np.copy(sigma_ray_long[minwave:maxwave]).reshape(len(sigma_ray_long[minwave:maxwave]),1)

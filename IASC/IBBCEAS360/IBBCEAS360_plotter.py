@@ -25,43 +25,57 @@ x=np.arange(1024)
 y=[0]*x
 
 line1, = ax1.plot(x,y)
+line1a,= ax1.plot(x,y)
 line2, = ax2.plot(x,y)
 line3, = ax2.plot(x,y)
 line4, = ax3.plot(x,y)
+line4a,= ax3.plot(x,y)
 line5, = ax4.plot(x,y)
 
 def init_func():
-    return line1, line2, line3, line4, line5,
+    return line1, line1a, line2, line3, line4, line5,
 
 def animate(i):
     try:
+        ax1adata= np.load("ax1adata.npy")
         ax1data = np.load("ax1data.npy")
         ax1.clear()
         line1, = ax1.plot(ax1data[:,0],ax1data[:,1],'-k')
-        ax1.set_title('Zero')
+        line1a,= ax1.plot(ax1adata[:,0],ax1adata[:,1],'-r')
+        ax1.set_title('Signal')
     except:
-        ax1.clear()
-        line1, = ax1.plot(x,y)
-        pass
+        try:
+            ax1data = np.load("ax1data.npy")
+            ax1.clear()
+            line1, = ax1.plot(ax1data[:,0],ax1data[:,1],'-k')
+            line1a,= ax1.plot(x,y)
+            ax1.set_title('Signal')
+        except:
+            ax1.clear()
+            line1, = ax1.plot(x,y)
+            line1a,= ax1.plot(x,y)
+            pass
    
     try:
         ax2data = np.load("ax2data.npy")
         ax2adata= np.load("ax2adata.npy")
         ax3data = np.load("ax3data.npy",allow_pickle=True)
+        ax3adata= np.load("ax3adata.npy",allow_pickle=True)
         ax4data = np.load("ax4data.npy",allow_pickle=True)
         ax2.clear()
         line2, = ax2.plot(ax2data[:,0],ax2data[:,1],'-k')
         line3, = ax2.plot(ax2adata[:,0],ax2adata[:,1],'-r')
         ax3.clear()
         ax4.clear()
-        line4, = ax3.plot(ax3data[:,0],ax3data[:,1],'-b')
+        line4, = ax3.plot(ax3data[:,0],ax3data[:,1],'-k')
+        line4a,= ax3.plot(ax3adata[:,0],ax3adata[:,1],'-b')
         line5, = ax4.plot(ax4data[:,0],ax4data[:,1],'-g')
         ax3.xaxis.set_major_formatter(DateFormatter('%H:%M'))
         ax4.spines['right'].set_color('green')
         ax4.tick_params(axis='y', colors='green')
         ax2.set_title('extinction')
         ax3.set_xlabel('Time [hr:min]')
-        ax3.set_ylabel('NO$_2$ [ppbv]')
+        ax3.set_ylabel('NO$_2$/MACR (blue) [ppbv]')
         ax4.yaxis.set_label_position('right')
         ax4.yaxis.label.set_color('green')
         ax4.set_ylabel('HONO [ppbv]')
@@ -74,10 +88,11 @@ def animate(i):
         ax3.clear()
         ax4.clear()
         line4, = ax3.plot(x,y)
+        line4a,= ax3.plot(x,y)
         line5, = ax4.plot(x,y)
         pass
 
-    return line1, line2, line3, line4, line5,
+    return line1, line1a, line2, line3, line4, line4a, line5,
 
 ani = animation.FuncAnimation(fig,animate,init_func=init_func,
         interval=1000,blit=False,cache_frame_data=False)

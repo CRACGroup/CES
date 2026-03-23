@@ -185,7 +185,7 @@ def fit_alg_1A(I_sample,I_0,Reff,distance,reference1,pPa,tK,sigma_ray,verbose=0,
         else:
             return c
 
-def fit_alg_1A_it(I_sample,I_0,Reff,distance,reference1,pPa,tK,sigma_ray,verbose=1,parameters=0,choice=2):
+def fit_alg_1A_it(I_sample,I_0,Reff,distance,reference1,pPa,tK,sigma_ray,verbose=1,parameters=0,itn=10,choice=2,npoints=150,npoly=2):
     """
     Fitting algorithm 1A (Iterative version)
     1. Gets extinction
@@ -202,8 +202,8 @@ def fit_alg_1A_it(I_sample,I_0,Reff,distance,reference1,pPa,tK,sigma_ray,verbose
     if c < 0:
         c=0
     alpha = alpha.reshape(len(alpha),1)
-    for i in range(10):
-        fl = get_fl_broadA(alpha,reference1,c,npoints=150,npoly=2)
+    for i in range(itn):
+        fl = get_fl_broadA(alpha,reference1,c,npoints=npoly,npoly=npoly)
         a,b,c = fit_signal_w_flA(alpha,fl,reference1)
 
     if verbose == 1:
@@ -261,7 +261,7 @@ def fit_alg_1B(I_sample,I_0,Reff,distance,reference1,reference2,pPa,tK,sigma_ray
         else:
             return c,d
 
-def fit_alg_1B_it(I_sample,I_0,Reff,distance,reference1,reference2,pPa,tK,sigma_ray,verbose=0,parameters=0,choice=2,itn=10):
+def fit_alg_1B_it(I_sample,I_0,Reff,distance,reference1,reference2,pPa,tK,sigma_ray,verbose=0,parameters=0,choice=2,itn=10,npoints=101,npoly=2):
     """Fitting algorithm 1:
     Calculates the extinction, fits two references using SVD, then obtains a 
     parametric function, recalculates the original extinction with the two
@@ -283,7 +283,7 @@ def fit_alg_1B_it(I_sample,I_0,Reff,distance,reference1,reference2,pPa,tK,sigma_
 
     alpha = alpha.reshape(len(alpha),1)
     for i in range(itn):
-        fl = get_fl_broadB(alpha,reference1,reference2,c,d,npoints=101,npoly=2)
+        fl = get_fl_broadB(alpha,reference1,reference2,c,d,npoints=npoints,npoly=npoly)
         a,b,c,d = fit_signal_w_flB(alpha,fl,reference1,reference2)
 
     if verbose == 1:
@@ -302,7 +302,7 @@ def fit_alg_1B_it(I_sample,I_0,Reff,distance,reference1,reference2,pPa,tK,sigma_
         else:
             return c,d
 
-def fit_alg_1C_it(I_sample,I_0,Reff,distance,reference1,reference2,reference3,pPa,tK,sigma_ray,verbose=0,parameters=0,choice=2,itn=10):
+def fit_alg_1C_it(I_sample,I_0,Reff,distance,reference1,reference2,reference3,pPa,tK,sigma_ray,verbose=0,parameters=0,choice=2,itn=10,npoints=150,npoly=2):
     """Fitting algorithm 1:
     Calculates the extinction, fits two references using SVD, then obtains a
     parametric function, recalculates the original extinction with the two
@@ -328,7 +328,7 @@ def fit_alg_1C_it(I_sample,I_0,Reff,distance,reference1,reference2,reference3,pP
 
     alpha = alpha.reshape(len(alpha),1)
     for i in range(itn):
-        fl = get_fl_broadC(alpha,reference1,reference2,reference3,c,d,e,npoints=150,npoly=2)
+        fl = get_fl_broadC(alpha,reference1,reference2,reference3,c,d,e,npoints=npoints,npoly=npoly)
         a,b,c,d,e = fit_signal_w_flC(alpha,fl,reference1,reference2,reference3)
 
     if verbose == 1:

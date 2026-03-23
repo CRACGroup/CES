@@ -68,7 +68,7 @@ upper_wavelength = 390
 back_filename = "background.npy"
 ref1name = "NO2_IASC_CEAS360_364_390.npy"
 ref2name = "HONO_IASC_CEAS360.npy"
-#ref3name = "H2O_IASC_CEAS660.npy" ### only for 650-672, sent through without shortening
+ref3name = "MACR_IASC_CEAS360_364_390r.npy" ## sent through without shortening
 zero_filename = "zero.npy"
 sigma_ray_filename = "sigma_ray_CEAS360.npy"
 

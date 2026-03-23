@@ -44,18 +44,22 @@ trigMode = codes.Trigger_Mode.INTERNAL
 #calfactors=(3.617668e2,+1.912843e-01,
 #            -1.823635e-4,1.755334e-7)
 #GLY_IBBCEAS 2024/03/14 New filter, calibrated with NO2 spectrum
-calfactors=(3.549321E+02,+1.494571E-01,
-		2.548211E-05,-2.204753E-08)
+#calfactors=(3.549321E+02,+1.494571E-01,
+#		2.548211E-05,-2.204753E-08)
+#2025/12/10, calibrated with NO2 spectrum
+calfactors=(3.39736352E+02,+2.05091521E-01,
+		-6.38963777E-05,2.56661171E-08)
+
 
 # Number of accumulations 
-accums = 40
+accums = 20
 
 # Accumulation cycle delay (Exp + Delay = Cycle time)
 delay = 0.1
 
 # Exposure time. 
-exptime_sample = .25
-exptime_blank = .25
+exptime_sample = .5
+exptime_blank = .5
 
 # Camera temperature
 temp = -20
@@ -76,7 +80,7 @@ upper_wavelength = 480
 
 # Reference and background filenames to load, they should be located in the local dir
 back_filename = "background.npy"
-ref1name = "NO2_IASC_CEAS450_432_480.npy"
+ref1name = "NO2_IASC_CEAS450.npy"
 ref2name = "CHOCHO_IASC_CEAS450.npy"
 #ref3name = "H2O_IASC_CEAS660.npy" ### only for 650-672, sent through without shortening
 zero_filename = "zero.npy"

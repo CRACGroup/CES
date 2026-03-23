@@ -25,24 +25,35 @@ x=np.arange(1024)
 y=[0]*x
 
 line1, = ax1.plot(x,y)
+line1a,= ax1.plot(x,y)
 line2, = ax2.plot(x,y)
 line3, = ax2.plot(x,y)
 line4, = ax3.plot(x,y)
 line5, = ax4.plot(x,y)
 
 def init_func():
-    return line1, line2, line3, line4, line5,
+    return line1, line1a, line2, line3, line4, line5,
 
 def animate(i):
     try:
+        ax1adata= np.load("ax1adata.npy")
         ax1data = np.load("ax1data.npy")
         ax1.clear()
         line1, = ax1.plot(ax1data[:,0],ax1data[:,1],'-k')
-        ax1.set_title('Zero')
+        line1a,= ax1.plot(ax1adata[:,0],ax1adata[:,1],'-r')
+        ax1.set_title('Signal')
     except:
-        ax1.clear()
-        line1, = ax1.plot(x,y)
-        pass
+        try:
+            ax1data = np.load("ax1data.npy")
+            ax1.clear()
+            line1, = ax1.plot(ax1data[:,0],ax1data[:,1],'-k')
+            line1a,= ax1.plot(x,y)
+            ax1.set_title('Signal')
+        except:
+            ax1.clear()
+            line1, = ax1.plot(x,y)
+            line1a,= ax1.plot(x,y)
+            pass
    
     try:
         ax2data = np.load("ax2data.npy")
@@ -76,7 +87,7 @@ def animate(i):
         line5, = ax4.plot(x,y)
         pass
 
-    return line1, line2, line3, line4, line5,
+    return line1, line1a, line2, line3, line4, line5,
 
 ani = animation.FuncAnimation(fig,animate,init_func=init_func,
         interval=1000,blit=False,cache_frame_data=False)

@@ -36,14 +36,14 @@ calfactors=(7.090964e+02,-1.167403e-01,
             -1.903367e-05,6.759619e-09)
 
 # Number of accumulations 
-accums = 100
+accums = 125
 
 # Accumulation cycle delay (Exp + Delay = Cycle time)
 delay = 0.05
 
 # Exposure time. 
-exptime_sample = .1
-exptime_blank = .1
+exptime_sample = .08
+exptime_blank = .08
 
 # Camera temperature
 temp = -20
